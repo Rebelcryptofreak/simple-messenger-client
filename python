@@ -1,0 +1,40 @@
+from flask import Flask, render_template, request, redirect, url_for
+import requests
+
+app = Flask(__name__)
+
+# Chat history
+messages = []
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        # Get the message from the form
+        message = request.form['message']
+        
+        # Add the message to the chat history
+        messages.append(('You', message))
+        
+        # Send the message to the server
+        response = requests.post('http://localhost:5000/send', json={'message': message})
+        
+        # Add the server's response to the chat history
+        messages.append(('Server', response.json()['message']))
+        
+        # Redirect to the index page
+        return redirect(url_for('index'))
+    
+    # Render the index template with the chat history
+    return render_template('index.html', messages=messages)
+
+@app.route('/send', methods=['POST'])
+def send():
+    # Get the message from the request
+    message = request.json['message']
+    
+    # Process the message (e.g., send it to another user, store it in a database, etc.)
+    # In this example, we simply echo the message back to the client
+    return {'message': f'You said: {message}'}
+
+if __name__ == '__main__':
+    app.run(debug=True)
